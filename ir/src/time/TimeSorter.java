@@ -49,7 +49,7 @@ public class TimeSorter {
 		while((line = test.readLine()) != null){
 			List <DocumentVector> timelineList = new ArrayList<DocumentVector>();
 			for (String documentId : line.split("\\s+")){
-				File f = new File("news_random_id_unlabeled_new/"+documentId); 
+				File f = new File("C:/Users/user/news_random_id_unlabeled_new/"+documentId); 
 				SAXReader reader = new SAXReader(); 
 				Document doc = reader.read(f); 
 				Element root = doc.getRootElement(); 
