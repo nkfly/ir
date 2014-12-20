@@ -11,8 +11,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -37,7 +39,7 @@ public class TimeSorter {
 		VocabProcessor vp = new VocabProcessor("gramlist.txt");
 		InvertedIndexProcessor iip = new InvertedIndexProcessor("inverseindex.txt"); 
 		
-		DocumentProcessor dp = new DocumentProcessor("C:/Users/user/news_random_id_unlabeled_new");
+		DocumentProcessor dp = new DocumentProcessor("/home/nkfly/news_random_id_unlabeled_new");
 		
 		AnswerKeeper ak = new AnswerKeeper("news_to_news_random_id_unlabeled_table_groundtruth_no_original_id.txt");
 		
@@ -48,8 +50,10 @@ public class TimeSorter {
 		String line;
 		while((line = test.readLine()) != null){
 			List <DocumentVector> timelineList = new ArrayList<DocumentVector>();
-			for (String documentId : line.split("\\s+")){
-				File f = new File("C:/Users/user/news_random_id_unlabeled_new/"+documentId); 
+			Set <String> testSet = new HashSet<String>();
+			for (String documentId : line.split("\\s+"))testSet.add(documentId);
+			for (String documentId : testSet){
+				File f = new File("/home/nkfly/news_random_id_unlabeled_new/"+documentId); 
 				SAXReader reader = new SAXReader(); 
 				Document doc = reader.read(f); 
 				Element root = doc.getRootElement(); 
@@ -61,14 +65,21 @@ public class TimeSorter {
 					for (String gram : grams){
 						gramList.add(gram);
 					}
+					
+					grams = QueryProcessor.chopGrams(foo.elementText("text").split("\\s+"));
+					for (String gram : grams){
+						gramList.add(gram);
+					}
 				}
 				
 				
 				List <DocumentVector> dvList = BM25.getDocumentRank(gramList, vp, iip, dp);
 				for (int i = 0;i < dvList.size();i++){
-					if(!documentId.equals(dvList.get(i).getId())){
-						DocumentVector dv = dvList.get(i);
-						dv.setTime(ak.getTime(String.valueOf(dvList.get(i).getId())));
+					if(!testSet.contains(String.valueOf(dvList.get(i).getId())) ){
+						DocumentVector dv = new DocumentVector(Integer.parseInt(documentId));
+						String time = ak.getTime(String.valueOf(dvList.get(i).getId()));
+						if (time == null)time = "2014-12-20";
+						dv.setTime(time);
 						timelineList.add(dv);
 						break;
 					}
