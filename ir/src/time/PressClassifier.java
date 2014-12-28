@@ -3,6 +3,7 @@ package time;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -55,8 +56,6 @@ public class PressClassifier {
 		JointParser parser = new JointParser("models/dep.m");
 		POSTagger tag = new POSTagger("models/seg.m","models/pos.m");
 		
-		Map <String, Integer> adj2index = new HashMap<String, Integer>();
-		Map <String, Integer> adj2df = new HashMap<String, Integer>();
 		
 		while((line = test.readLine()) != null){
 			BufferedWriter trainingWriter = new BufferedWriter(new FileWriter(new File("training"+i+".txt")));
@@ -64,38 +63,45 @@ public class PressClassifier {
 			List <String> grams = query.get(i);
 			i++;
 			List <DocumentVector> dvList = BM25.getDocumentRank(grams, vp, iip, dp);
-			
-			Set <String> featurs = new HashSet<String>();
+			Map <String, Integer> adj2index = new HashMap<String, Integer>();
+			Map <String, Integer> adj2df = new HashMap<String, Integer>();
 			String regex = "[、？，。\\s+]";
 			List <ClassifiedInstance> listOfCi= new ArrayList <ClassifiedInstance>();
 			for (DocumentVector dv : dvList){
-				File f = new File(dir+dv.getId()); 
-				SAXReader reader = new SAXReader(); 
-				Document doc = reader.read(f); 
-				Element root = doc.getRootElement(); 
-				Element foo;				
-				
-				ClassifiedInstance ci = new ClassifiedInstance();
-				ci.id = dv.getId();
-				for (Iterator iter = root.elementIterator("doc"); iter.hasNext();) { 
-					foo = (Element) iter.next(); 
-					for (String sentence : foo.elementText("title").split(regex)){
-						processNlpInfo(sentence, tag,parser,adj2index,adj2df,ci);
+				try {
+					File f = new File(dir+dv.getId()); 
+					replaceBr(f);
+					SAXReader reader = new SAXReader();
+					Document doc = reader.read(f); 
+					Element root = doc.getRootElement(); 
+					Element foo;				
+					
+					ClassifiedInstance ci = new ClassifiedInstance();
+					ci.id = dv.getId();
+					for (Iterator iter = root.elementIterator("doc"); iter.hasNext();) { 
+						foo = (Element) iter.next(); 
+						for (String sentence : foo.elementText("title").split(regex)){
+							processNlpInfo(sentence, tag,parser,adj2index,adj2df,ci);
+						}
+						for (String sentence : foo.elementText("text").split(regex)){
+							processNlpInfo(sentence, tag,parser,adj2index,adj2df,ci);
+						}					
 					}
-					for (String sentence : foo.elementText("text").split(regex)){
-						processNlpInfo(sentence, tag,parser,adj2index,adj2df,ci);
-					}					
+					listOfCi.add(ci);
+					
+				}catch (Exception e){
+					e.printStackTrace();
 				}
-				listOfCi.add(ci);
+				
 				
 			}
 			
 			
-			String [] testDocuments = line.split("\\s+");
-			Set <String> testDocumentSet = new HashSet<String>();
-			for (String td : testDocuments){
-				testDocumentSet.add(td);
-			}
+//			String [] testDocuments = line.split("\\s+");
+//			Set <String> testDocumentSet = new HashSet<String>();
+//			for (String td : testDocuments){
+//				testDocumentSet.add(td);
+//			}
 			for (ClassifiedInstance ci : listOfCi){
 				if (ak.getNewsFirm(String.valueOf(ci.id)) == null){
 					ci.press = 4;
@@ -150,6 +156,21 @@ public class PressClassifier {
 		}else {
 			ci.dimension2value.put(dependencyPair.getAdjective(), ci.dimension2value.get(dependencyPair.getAdjective())+1.0);
 		}
+	}
+	
+	private static void replaceBr(File f) throws IOException{
+		BufferedReader reader = new BufferedReader(new FileReader(f));
+		String line;
+		String content = "";
+		while((line = reader.readLine()) != null){
+			content += (line.replace("<BR>", "") + "\n");
+		}
+		reader.close();
+		
+		BufferedWriter writer = new BufferedWriter(new FileWriter(f));
+		writer.write(content);
+		writer.close();		
+		
 	}
 		
 	
