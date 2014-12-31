@@ -39,6 +39,14 @@ public class DocumentProcessor {
 		averageDocumentLength = averageDocumentLength/documentNumber;
 		
 	}
+	
+	public File[] getAllDocs(){
+		File folder = new File(newsDirectory);
+		return folder.listFiles();
+
+	}
+	
+	
 
 	/**
 	 * @param args

@@ -36,6 +36,114 @@ import phaseone.VocabProcessor;
 
 public class PressClassifier {
 	public static void main(String [] argv)throws Exception{
+		svmTrain();
+
+		
+	}
+	private static void ruleBasedApproach() throws Exception{
+		BufferedReader test = new BufferedReader(new FileReader(new File("phase1_pooling_result.txt")));
+		String line;
+		
+		while((line = test.readLine()) != null){
+			
+			
+		}
+		
+		
+	}
+	
+	private static int wordCount(String sentence, String word){
+		int indexOf = -1;
+		int fromIndex = 0;
+		int count = 0;
+		while( (indexOf = sentence.indexOf(word, fromIndex)) != -1){
+			count++;
+			fromIndex = indexOf+1;
+		}
+		return count;
+		
+	}
+	
+	private static void svmTrain() throws IOException{
+//		String queryFile = "query.txt";
+//		QueryProcessor qp = new QueryProcessor(queryFile);
+//		List < List<String> > query = qp.getQuery();
+		
+//		VocabProcessor vp = new VocabProcessor("gramlist.txt");
+//		InvertedIndexProcessor iip = new InvertedIndexProcessor("inverseindex.txt"); 
+		
+		String dir = "/home/nkfly/news_random_id_unlabeled_new/";
+		DocumentProcessor dp = new DocumentProcessor(dir);
+		
+		AnswerKeeper ak = new AnswerKeeper("news_to_news_random_id_unlabeled_table_groundtruth_no_original_id.txt");
+		
+		
+		BufferedReader test = new BufferedReader(new FileReader(new File("phase1_pooling_result.txt")));
+		String line;
+		Set <String> testSet = new HashSet<String>();
+		
+		while((line = test.readLine()) != null){
+			for (String testDocId : line.split("\\s+"))testSet.add(testDocId);
+		}
+		test.close();
+		
+		BufferedWriter trainingWriter = new BufferedWriter(new FileWriter(new File("training.txt")));
+		trainingWriter.close();
+			
+		for (File doc : dp.getAllDocs()){
+			String id  = doc.getName();
+			System.out.println("id="+id);
+			if (testSet.contains(id))continue;
+			
+			double avgParagraphLength = 0.0;
+			int numebrOfParagraph = 0;
+			int numberOfPathUnderThresholdLength = 0;
+			int numberOfSay = 0;
+			
+				
+			try {
+				File f = new File(dir+id); 
+				replaceBr(f);
+				SAXReader reader = new SAXReader();
+				Document document = reader.read(f); 
+				Element root = document.getRootElement(); 
+				Element foo;
+				for (Iterator iter = root.elementIterator("doc"); iter.hasNext();) { 
+//					for (String sentence : foo.elementText("title").split(regex)){
+//						
+//					}
+					Element foodoc = (Element) iter.next();
+					Element footext = (Element)foodoc.elementIterator("text").next();
+					
+					for (Iterator iter2 = footext.elementIterator("p") ; iter2.hasNext(); ){
+						Element foo2 = (Element) iter2.next();
+						String content = foo2.getText();
+						avgParagraphLength += content.length();
+						numebrOfParagraph++;
+						
+						if (content.length() < 15){
+							numberOfPathUnderThresholdLength++;
+						}
+						
+						numberOfSay += wordCount(content, "表示");
+						numberOfSay += wordCount(content, "強調");
+						numberOfSay += wordCount(content, "批評");
+						numberOfSay += wordCount(content, "說");
+						
+						
+					}
+					
+				}			
+			}catch (Exception e){
+				e.printStackTrace();
+			}
+			if (numebrOfParagraph != 0)avgParagraphLength /= numebrOfParagraph;
+			System.out.println(avgParagraphLength + " " +numebrOfParagraph+ " " + numberOfPathUnderThresholdLength+ " " + numberOfSay);
+			
+		}
+	}
+	
+	private static void nlpApproach() throws Exception{
 		String queryFile = "query.txt";
 		QueryProcessor qp = new QueryProcessor(queryFile);
 		List < List<String> > query = qp.getQuery();
@@ -127,7 +235,6 @@ public class PressClassifier {
 		}
 		
 		test.close();
-
 		
 	}
 	
