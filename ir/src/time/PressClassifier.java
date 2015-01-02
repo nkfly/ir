@@ -36,20 +36,68 @@ import phaseone.VocabProcessor;
 
 public class PressClassifier {
 	public static void main(String [] argv)throws Exception{
-		svmTrain();
+//		svmTrain();
+		svmGenerateTestFile();
 
 		
 	}
-	private static void ruleBasedApproach() throws Exception{
+	private static void svmGenerateTestFile() throws IOException{
 		BufferedReader test = new BufferedReader(new FileReader(new File("phase1_pooling_result.txt")));
 		String line;
-		
+		BufferedWriter testWriter = new BufferedWriter(new FileWriter(new File("svm_test.txt")));
+		String dir = "/home/nkfly/news_random_id_unlabeled_new/";
 		while((line = test.readLine()) != null){
+			String [] ids = line.split("\\s+");
+			for (String id : ids){
+				double avgParagraphLength = 0.0;
+				int numebrOfParagraph = 0;
+				int numberOfPathUnderThresholdLength = 0;
+				int numberOfSay = 0;
+				try {
+					File f = new File(dir+id); 
+					replaceBr(f);
+					SAXReader reader = new SAXReader();
+					Document document = reader.read(f); 
+					Element root = document.getRootElement(); 
+					Element foo;
+					for (Iterator iter = root.elementIterator("doc"); iter.hasNext();) { 
+//						for (String sentence : foo.elementText("title").split(regex)){
+//							
+//						}
+						Element foodoc = (Element) iter.next();
+						Element footext = (Element)foodoc.elementIterator("text").next();
+						
+						for (Iterator iter2 = footext.elementIterator("p") ; iter2.hasNext(); ){
+							Element foo2 = (Element) iter2.next();
+							String content = foo2.getText();
+							avgParagraphLength += content.length();
+							numebrOfParagraph++;
+							
+							if (content.length() < 15){
+								numberOfPathUnderThresholdLength++;
+							}
+							numberOfSay += wordCount(content, "表示");
+							numberOfSay += wordCount(content, "強調");
+							numberOfSay += wordCount(content, "批評");
+							numberOfSay += wordCount(content, "說");
+							
+							
+						}
+						
+					}			
+				}catch (Exception e){
+					e.printStackTrace();
+				}
+				if (numebrOfParagraph != 0)avgParagraphLength /= numebrOfParagraph;
+//				System.out.println(avgParagraphLength + " " +numebrOfParagraph+ " " + numberOfPathUnderThresholdLength+ " " + numberOfSay);
+				testWriter.write(0 + " 1:" +avgParagraphLength + " 2:" +numebrOfParagraph+ " 3:" + numberOfPathUnderThresholdLength+ " 4:" + numberOfSay + "\n");
+				
+			}
 			
 			
 		}
-		
-		
+		test.close();
+		testWriter.close();
 	}
 	
 	private static int wordCount(String sentence, String word){
@@ -124,7 +172,6 @@ public class PressClassifier {
 						if (content.length() < 15){
 							numberOfPathUnderThresholdLength++;
 						}
-						
 						numberOfSay += wordCount(content, "表示");
 						numberOfSay += wordCount(content, "強調");
 						numberOfSay += wordCount(content, "批評");
