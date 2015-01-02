@@ -88,11 +88,11 @@ public class PressClassifier {
 		test.close();
 		
 		BufferedWriter trainingWriter = new BufferedWriter(new FileWriter(new File("training.txt")));
-		trainingWriter.close();
+		
 			
 		for (File doc : dp.getAllDocs()){
 			String id  = doc.getName();
-			System.out.println("id="+id);
+//			System.out.println("id="+id);
 			if (testSet.contains(id))continue;
 			
 			double avgParagraphLength = 0.0;
@@ -138,9 +138,11 @@ public class PressClassifier {
 				e.printStackTrace();
 			}
 			if (numebrOfParagraph != 0)avgParagraphLength /= numebrOfParagraph;
-			System.out.println(avgParagraphLength + " " +numebrOfParagraph+ " " + numberOfPathUnderThresholdLength+ " " + numberOfSay);
+//			System.out.println(avgParagraphLength + " " +numebrOfParagraph+ " " + numberOfPathUnderThresholdLength+ " " + numberOfSay);
+			trainingWriter.write(ak.getNewsFirm(id) + " 1:" +avgParagraphLength + " 2:" +numebrOfParagraph+ " 3:" + numberOfPathUnderThresholdLength+ " 4:" + numberOfSay + "\n");
 			
 		}
+		trainingWriter.close();
 	}
 	
 	private static void nlpApproach() throws Exception{
