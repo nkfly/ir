@@ -37,10 +37,91 @@ import phaseone.VocabProcessor;
 public class PressClassifier {
 	public static void main(String [] argv)throws Exception{
 //		svmTrain();
-		svmGenerateTestFile();
+//		svmGenerateTestFile();
+		mergeTimeAndPress();
 
 		
 	}
+	
+	private static void mergeTimeAndPress() throws Exception{
+		
+		BufferedReader test = new BufferedReader(new FileReader(new File("phase1_pooling_result.txt")));
+		BufferedReader pressPredict = new BufferedReader(new FileReader(new File("output.txt")));
+		String line1;
+		String line2;
+		Map <String, String> id2class = new HashMap<String, String>();
+				
+		while((line1 = test.readLine()) != null ){
+			String [] ids = line1.split("\\s+");
+			for (String id : ids){
+				line2 = pressPredict.readLine().trim();
+				id2class.put(id, line2);
+			}
+		}
+		test.close();
+		pressPredict.close();
+		
+		
+		
+		String dir = "/home/nkfly/news_random_id_unlabeled_new/";
+		
+		BufferedWriter writer = new BufferedWriter(new FileWriter(new File("result.txt")));
+		List < List <DocumentVector>> timeAnswer = TimeSorter.timeSort();
+		System.out.println(timeAnswer.size());
+		for (int i = 0;i < timeAnswer.size();i++){
+			writer.write((i+1)+"\n");
+			for (DocumentVector dv : timeAnswer.get(i)){
+				int assureClass = -1;
+				try {
+					File f = new File(dir+dv.getId()); 
+					replaceBr(f);
+					SAXReader reader = new SAXReader();
+					Document document = reader.read(f); 
+					Element root = document.getRootElement(); 
+					Element foo;
+					for (Iterator iter = root.elementIterator("doc"); iter.hasNext();) { 
+//						0=中國時報 1=蘋果日報 2=自由時報
+						Element foodoc = (Element) iter.next();
+						if (foodoc.elementText("title").contains("時論") ){
+							assureClass = 0;
+						}else if (foodoc.elementText("title").contains("蘋論")){
+							assureClass = 1;
+						}
+							
+											
+						Element footext = (Element)foodoc.elementIterator("text").next();
+						
+						for (Iterator iter2 = footext.elementIterator("p") ; iter2.hasNext(); ){
+							Element foo2 = (Element) iter2.next();
+							String content = foo2.getText();
+							if (!iter2.hasNext() && content.contains("作者為")){
+								assureClass = 0;
+							}else if (!iter2.hasNext() && content.contains("資料來源")){
+								assureClass = 1;
+							} 
+							
+						}
+						
+					}			
+				}catch (Exception e){
+					e.printStackTrace();
+				}
+				if (assureClass != -1){
+					writer.write(assureClass + " " + id2class.get(String.valueOf(dv.getId()))+ " " );
+				}else {
+					writer.write(dv.getId() + " " + id2class.get(String.valueOf(dv.getId()))+ " " );
+				}
+				
+			}
+			writer.write("\n");
+		}
+		writer.close();
+		
+		
+		
+		
+	}
+	
 	private static void svmGenerateTestFile() throws IOException{
 		BufferedReader test = new BufferedReader(new FileReader(new File("phase1_pooling_result.txt")));
 		String line;

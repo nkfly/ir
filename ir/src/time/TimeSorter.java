@@ -36,6 +36,22 @@ public class TimeSorter {
 	 * @throws DocumentException 
 	 */
 	public static void main(String[] args) throws IOException, DocumentException {
+		List < List < DocumentVector > > sortAnswer = timeSort();
+		BufferedWriter writer = new BufferedWriter(new FileWriter(new File("timeline.txt")));
+			for (List <DocumentVector> timelineList: sortAnswer){
+				for (DocumentVector dv : timelineList){
+					writer.write(dv.getId()+":"+dv.getTime()+"\t");
+				}
+				writer.write("\n");
+			}
+			
+		writer.close();
+		
+		// TODO Auto-generated method stub
+
+	}
+
+	public static List < List <DocumentVector>> timeSort() throws IOException, DocumentException{
 		VocabProcessor vp = new VocabProcessor("gramlist.txt");
 		InvertedIndexProcessor iip = new InvertedIndexProcessor("inverseindex.txt"); 
 		
@@ -43,8 +59,8 @@ public class TimeSorter {
 		
 		AnswerKeeper ak = new AnswerKeeper("news_to_news_random_id_unlabeled_table_groundtruth_no_original_id.txt");
 		
-		BufferedWriter writer = new BufferedWriter(new FileWriter(new File("timeline.txt")));
 		
+		List < List <DocumentVector>> sortAnswer = new ArrayList< List<DocumentVector> >();
 		
 		BufferedReader test = new BufferedReader(new FileReader(new File("phase1_pooling_result.txt")));
 		String line;
@@ -93,16 +109,11 @@ public class TimeSorter {
 				}
 			});
 			
-			for (DocumentVector dv: timelineList){
-				writer.write(dv.getId()+":"+dv.getTime()+"\t");
-			}
-			writer.write("\n");
+			sortAnswer.add(timelineList);			
 		}
 		test.close();
-		writer.close();
+		return sortAnswer;
 		
-		// TODO Auto-generated method stub
-
 	}
 
 }
