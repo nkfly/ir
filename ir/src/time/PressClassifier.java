@@ -107,7 +107,7 @@ public class PressClassifier {
 					e.printStackTrace();
 				}
 				if (assureClass != -1){
-					writer.write(assureClass + " " + id2class.get(String.valueOf(dv.getId()))+ " " );
+					writer.write(dv.getId() + " " + assureClass + " " );
 				}else {
 					writer.write(dv.getId() + " " + id2class.get(String.valueOf(dv.getId()))+ " " );
 				}
